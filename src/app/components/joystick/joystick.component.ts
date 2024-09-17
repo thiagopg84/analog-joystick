@@ -15,6 +15,9 @@ export class JoystickComponent implements AfterViewInit {
   centerY: number = 0;
   maxDistance: number = 45; // Padrão: 80
   isDragging: boolean = false;
+  intervalId: any;
+  lastDeltaX: number = 0;
+  lastDeltaY: number = 0;
 
   ngAfterViewInit() {
     const rect = this.backgroundLimit.nativeElement.getBoundingClientRect();
@@ -35,33 +38,39 @@ export class JoystickComponent implements AfterViewInit {
     }
 
     this.updateJoystickPosition(deltaX, deltaY);
-    this.logNormalizedValues(deltaX, deltaY);
+    this.lastDeltaX = deltaX;
+    this.lastDeltaY = deltaY;
+    this.sendPTZData(deltaX, deltaY);
     this.isDragging = true;
   }
 
   updateJoystickPosition(deltaX: number, deltaY: number) {
     const stickElement = this.joystick.nativeElement;
-    const stickRect = stickElement.getBoundingClientRect();
-    const halfStickWidth = stickRect.width / 2;
-    const halfStickHeight = stickRect.height / 2;
-
-    stickElement.style.transform = `translate(${deltaX - halfStickWidth}px, ${deltaY - halfStickHeight}px)`;
+    const offset = stickElement.offsetWidth / 2;
+    stickElement.style.transform = `translate(${deltaX - offset}px, ${deltaY - offset}px)`;
   }
 
-  logNormalizedValues(deltaX: number, deltaY: number) {
-    const normalizedX = (deltaX / this.maxDistance).toFixed(2);
-    const normalizedY = (deltaY / this.maxDistance).toFixed(2);
-    console.log(`Eixo X: ${normalizedX}, Eixo Y: ${normalizedY}`);
+  sendPTZData(deltaX: number, deltaY: number) {
+    const pan = (deltaX / this.maxDistance).toFixed(2);
+    const tilt = (deltaY / this.maxDistance).toFixed(2);
+    console.log(`Pan: ${pan}, Tilt: ${tilt}`);
+  }
+
+  onDragStart() {
+    this.intervalId = setInterval(() => {
+      this.sendPTZData(this.lastDeltaX, this.lastDeltaY);
+    }, 100);
   }
 
   onDragEnd() {
+    clearInterval(this.intervalId);
     const stickElement = this.joystick.nativeElement;
     stickElement.classList.add('releasing');
     stickElement.style.transform = `translate(-50%, -50%)`;
+    this.isDragging = false;
 
     setTimeout(() => {
       stickElement.classList.remove('releasing');
-      this.isDragging = false;
     }, 200);
     console.log('Stick solto, resetando posição');
   }
@@ -70,9 +79,16 @@ export class JoystickComponent implements AfterViewInit {
   onTouchMove(event: TouchEvent) {
     event.preventDefault();
     const touch = event.touches[0];
+    const touchX = touch.clientX;
+    const touchY = touch.clientY;
     this.onDragMove({
-      pointerPosition: { x: touch.clientX, y: touch.clientY }
+      pointerPosition: { x: touchX, y: touchY }
     } as CdkDragMove);
+  }
+
+  @HostListener('touchstart', ['$event'])
+  onTouchStart(event: TouchEvent) {
+    this.onDragStart();
   }
 
   @HostListener('touchend', ['$event'])

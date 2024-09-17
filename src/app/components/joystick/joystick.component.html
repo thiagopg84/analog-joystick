@@ -1,6 +1,11 @@
 <div class="joystick-container">
   <div class="joystick-background" #backgroundLimit>
-    <div class="joystick-stick" cdkDrag (cdkDragMoved)="onDragMove($event)" (cdkDragReleased)="onDragEnd()" #joystick>
+    <div class="joystick-stick"
+      cdkDrag
+      (cdkDragMoved)="onDragMove($event)"
+      (cdkDragReleased)="onDragEnd()"
+      (cdkDragStarted)="onDragStart()"
+      #joystick>
       <div class="inner"></div>
     </div>
   </div>
