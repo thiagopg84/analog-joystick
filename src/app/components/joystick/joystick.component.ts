@@ -18,6 +18,8 @@ export class JoystickComponent implements AfterViewInit {
   intervalId: any;
   lastDeltaX: number = 0;
   lastDeltaY: number = 0;
+  private lastSentTime: number = 0;
+  private throttleDelay: number = 250;
 
   ngAfterViewInit() {
     const rect = this.backgroundLimit.nativeElement.getBoundingClientRect();
@@ -51,6 +53,11 @@ export class JoystickComponent implements AfterViewInit {
   }
 
   sendPTZData(deltaX: number, deltaY: number) {
+    const currentTime = Date.now();
+    if (currentTime - this.lastSentTime < this.throttleDelay) {
+      return;
+    }
+    this.lastSentTime = currentTime;
     const pan = (deltaX / this.maxDistance).toFixed(2);
     const tilt = (deltaY / this.maxDistance).toFixed(2);
     console.log(`Pan: ${pan}, Tilt: ${tilt}`);
@@ -59,7 +66,7 @@ export class JoystickComponent implements AfterViewInit {
   onDragStart() {
     this.intervalId = setInterval(() => {
       this.sendPTZData(this.lastDeltaX, this.lastDeltaY);
-    }, 100);
+    }, this.throttleDelay);
   }
 
   onDragEnd() {
