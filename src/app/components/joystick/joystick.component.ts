@@ -22,9 +22,7 @@ export class JoystickComponent implements AfterViewInit {
   private throttleDelay: number = 250;
 
   ngAfterViewInit() {
-    const rect = this.backgroundLimit.nativeElement.getBoundingClientRect();
-    this.centerX = rect.left + rect.width / 2;
-    this.centerY = rect.top + rect.height / 2;
+    this.updateCenterPosition();
   }
 
   onDragMove(event: CdkDragMove) {
@@ -82,6 +80,12 @@ export class JoystickComponent implements AfterViewInit {
     console.log('Stick solto, resetando posição');
   }
 
+  updateCenterPosition() {
+    const rect = this.backgroundLimit.nativeElement.getBoundingClientRect();
+    this.centerX = rect.left + rect.width / 2;
+    this.centerY = rect.top + rect.height / 2;
+  }
+
   @HostListener('touchmove', ['$event'])
   onTouchMove(event: TouchEvent) {
     event.preventDefault();
@@ -101,5 +105,10 @@ export class JoystickComponent implements AfterViewInit {
   @HostListener('touchend', ['$event'])
   onTouchEnd(event: TouchEvent) {
     this.onDragEnd();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.updateCenterPosition();
   }
 }
